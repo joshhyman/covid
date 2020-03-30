@@ -28,7 +28,7 @@ names(la) = c("Confirmed", "Diff")
 sf = cbind(sf, c(0, diff(sf[,])))
 names(sf) = c("Confirmed", "Diff")
 
-png("~/www/no_crawl/covid_plot.png")
+png("covid_plot.png")
 
 plot(ny$Confirmed, ny$Diff,
      type="b",
