@@ -27,6 +27,10 @@ plot(la$Confirmed, la$Diff,
      xlab="Confirmed Cases",
      ylab="Daily Cases")
 
-lines(sf$Confirmed, sf$Diff, type="b", col="blue")
+lines(sf$Confirmed, sf$Diff, type="b", col="red")
+
+legend("topleft", lty=c(1,1), bty="n",
+       col=c("black", "red"),
+       legend=c("Los Angeles", "San Francisco"))
 
 dev.off()
