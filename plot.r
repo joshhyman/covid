@@ -1,11 +1,10 @@
+#-----------------------------
+# Read Hopkins Datatset
+#-----------------------------
 filepath = "COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/"
 datafiles = list.files(filepath)
 
 cn = data.frame()
-ny = data.frame()
-ca = data.frame()
-la = data.frame()
-sf = data.frame()
 
 for (f in datafiles) {
   if (f == "README.md") { next }
@@ -13,45 +12,51 @@ for (f in datafiles) {
   d = read.csv(file.path(filepath, f))
   cn = rbind(cn, sum(d[c(d$Country_Region == "China",
                          d$Country.Region %in% c("China", "Mainland China")), c("Confirmed")], na.rm=T))
-  ny = rbind(ny, sum(d[c(d$Province_State == "New York", d$Province.State == "New York"), c("Confirmed")]))
-  ca = rbind(ca, sum(d[c(d$Province_State == "California", d$Province.State == "California"), c("Confirmed")]))
-  la = rbind(la, d[d$Province_State == "California" & d$Admin2 == "Los Angeles", c("Confirmed")])
-  sf = rbind(sf, d[d$Province_State == "California" & d$Admin2 == "San Francisco", c("Confirmed")])
 }
 
 cn = cbind(cn, c(0, diff(cn[,])))
 names(cn) = c("Confirmed", "Diff")
 
-ny = cbind(ny, c(0, diff(ny[,])))
-names(ny) = c("Confirmed", "Diff")
+#-----------------------------
+# Read NYT Datatset
+#-----------------------------
+series = list()
 
-ca = cbind(ca, c(0, diff(ca[,])))
-names(ca) = c("Confirmed", "Diff")
+states = read.csv("covid-19-data/us-states.csv")
+series[["ny"]] = data.frame(states[states$state == "New York", c("cases")])
+series[["ca"]] = data.frame(states[states$state == "California", c("cases")])
 
-la = cbind(la, c(0, diff(la[,])))
-names(la) = c("Confirmed", "Diff")
+counties = read.csv("covid-19-data/us-counties.csv")
+series[["la"]] = data.frame(counties[counties$county == "Los Angeles", c("cases")])
+series[["sf"]] = data.frame(counties[counties$county == "San Francisco", c("cases")])
 
-sf = cbind(sf, c(0, diff(sf[,])))
-names(sf) = c("Confirmed", "Diff")
+for (i in 1:length(series)) {
+  series[[i]] = cbind(series[[i]], c(0, diff(series[[i]][,])))
+  names(series[[i]]) = c("Confirmed", "Diff")
+}
+
+#-----------------------------
+# Plot
+#-----------------------------
+c = c("#000000", "#E69F00", "#56B4E9", "#009E73",
+      "#0072B2", "#D55E00", "#CC79A7")
 
 png("covid_plot.png")
 options(scipen=999)
 
-plot(cn$Confirmed, cn$Diff,
-     type="b",
-     xlim=range(100,max(cn$Confirmed)),
-     ylim=range(10,max(cn$Diff)),
+plot(series[[1]]$Confirmed, series[[1]]$Diff,
+     type="b", col=c[1],
+     xlim=range(1,max(series[[1]]$Confirmed)),
+     ylim=range(1,max(series[[1]]$Diff)),
      log="xy", xlog=TRUE, ylog=TRUE,
      xlab="Confirmed Cases",
      ylab="Daily Cases")
 
-lines(ny$Confirmed, ny$Diff, type="b", col="purple")
-lines(ca$Confirmed, ca$Diff, type="b", col="green")
-lines(la$Confirmed, la$Diff, type="b", col="red")
-lines(sf$Confirmed, sf$Diff, type="b", col="blue")
+for (i in 2:length(series)) {
+  lines(series[[i]]$Confirmed, series[[i]]$Diff, type="b", col=c[i])
+}
 
-legend("topleft", lty=c(1,1), bty="n",
-       col=c("black", "purple", "green", "red", "blue"),
-       legend=c("China", "New York", "California", "Los Angeles", "San Francisco"))
+legend("topleft", lty=c(1,1), bty="n", col=c,
+       legend=c("New York", "California", "Los Angeles", "San Francisco"))
 
 dev.off()
