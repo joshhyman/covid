@@ -1,3 +1,5 @@
+library(zoo)
+
 #-----------------------------
 # Read Hopkins Datatset
 #-----------------------------
@@ -23,29 +25,30 @@ names(cn) = c("Confirmed", "Diff")
 series = list()
 
 states = read.csv("covid-19-data/us-states.csv")
-series[["ny"]] = data.frame(states[states$state == "New York", c("cases")])
-series[["ca"]] = data.frame(states[states$state == "California", c("cases")])
+series[["New York"]] = data.frame(states[states$state == "New York", c("cases")])
+series[["California"]] = data.frame(states[states$state == "California", c("cases")])
 
 counties = read.csv("covid-19-data/us-counties.csv")
-series[["la"]] = data.frame(counties[counties$county == "Los Angeles", c("cases")])
-series[["sf"]] = data.frame(counties[counties$county == "San Francisco", c("cases")])
+series[["Los Angeles"]] = data.frame(counties[counties$county == "Los Angeles", c("cases")])
+series[["San Francisco"]] = data.frame(counties[counties$county == "San Francisco", c("cases")])
 
 for (i in 1:length(series)) {
-  series[[i]] = cbind(series[[i]], c(0, diff(series[[i]][,])))
+  series[[i]] = cbind(series[[i]], c(0, rollmean(diff(series[[i]][,]), k=4, fill=c(0), align="right")))
   names(series[[i]]) = c("Confirmed", "Diff")
 }
 
 #-----------------------------
 # Plot
 #-----------------------------
-c = c("#000000", "#E69F00", "#56B4E9", "#009E73",
-      "#0072B2", "#D55E00", "#CC79A7")
+series_colors = c("#000000", "#E69F00", "#56B4E9", "#009E73",
+                  "#0072B2", "#D55E00", "#CC79A7")
+#series_colors = c("black", "red", "green", "blue")
 
 png("covid_plot.png")
 options(scipen=999)
 
 plot(series[[1]]$Confirmed, series[[1]]$Diff,
-     type="b", col=c[1],
+     type="b", col=series_colors[1],
      xlim=range(1,max(series[[1]]$Confirmed)),
      ylim=range(1,max(series[[1]]$Diff)),
      log="xy", xlog=TRUE, ylog=TRUE,
@@ -53,10 +56,9 @@ plot(series[[1]]$Confirmed, series[[1]]$Diff,
      ylab="Daily Cases")
 
 for (i in 2:length(series)) {
-  lines(series[[i]]$Confirmed, series[[i]]$Diff, type="b", col=c[i])
+  lines(series[[i]]$Confirmed, series[[i]]$Diff, type="b", col=series_colors[i])
 }
 
-legend("topleft", lty=c(1,1), bty="n", col=c,
-       legend=c("New York", "California", "Los Angeles", "San Francisco"))
+legend("topleft", lty=c(1,1), bty="n", col=series_colors, legend=names(series))
 
 dev.off()
