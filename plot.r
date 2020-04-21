@@ -32,6 +32,13 @@ counties = read.csv("covid-19-data/us-counties.csv")
 series[["Los Angeles"]] = data.frame(counties[counties$county == "Los Angeles", c("cases")])
 series[["San Francisco"]] = data.frame(counties[counties$county == "San Francisco", c("cases")])
 
+#-----------------------------
+# Read LA Times Datatset
+#-----------------------------
+# Columns: date,county,fips,place,confirmed_cases,note,x,y
+la_cases = read.csv("california-coronavirus-data/latimes-place-totals.csv")
+series[["Santa Monica"]] = data.frame(la_cases[la_cases$place == "Santa Monica", c("confirmed_cases")])
+
 for (i in 1:length(series)) {
   series[[i]] = cbind(series[[i]], c(0, rollmean(diff(series[[i]][,]), k=4, fill=c(0), align="right")))
   names(series[[i]]) = c("Confirmed", "Diff")
@@ -41,7 +48,7 @@ for (i in 1:length(series)) {
 # Plot
 #-----------------------------
 series_colors = c("#000000", "#E69F00", "#56B4E9", "#009E73",
-                  "#0072B2", "#D55E00", "#CC79A7")
+                  "#236B78", "#0072B2", "#D55E00", "#CC79A7")
 #series_colors = c("black", "red", "green", "blue")
 
 png("covid_plot.png")
